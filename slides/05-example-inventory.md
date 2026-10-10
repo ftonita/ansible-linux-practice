@@ -28,4 +28,10 @@ db-1.example.com  | SUCCESS => { "ping": "pong" }
 
 ---
 
+<div align="center">
+
 [⬅️ Назад](04-how-it-works.md) · [Далее ➡️](06-example-playbook.md)
+
+<sub>●●●●●○○○ &nbsp; слайд 5 из 8</sub>
+
+</div>

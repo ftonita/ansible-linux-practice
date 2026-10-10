@@ -16,4 +16,10 @@
 
 ---
 
+<div align="center">
+
 [⬅️ Назад](02-problem.md) · [Далее ➡️](04-how-it-works.md)
+
+<sub>●●●○○○○○ &nbsp; слайд 3 из 8</sub>
+
+</div>

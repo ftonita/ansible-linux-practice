@@ -22,4 +22,10 @@ flowchart LR
 
 ---
 
+<div align="center">
+
 [⬅️ Назад](03-what-is-ansible.md) · [Далее ➡️](05-example-inventory.md)
+
+<sub>●●●●○○○○ &nbsp; слайд 4 из 8</sub>
+
+</div>

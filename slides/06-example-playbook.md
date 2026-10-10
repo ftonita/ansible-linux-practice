@@ -33,4 +33,10 @@ ansible-playbook -i inventory.ini nginx.yml
 
 ---
 
+<div align="center">
+
 [⬅️ Назад](05-example-inventory.md) · [Далее ➡️](07-benefits.md)
+
+<sub>●●●●●●○○ &nbsp; слайд 6 из 8</sub>
+
+</div>

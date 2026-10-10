@@ -16,4 +16,10 @@
 
 ---
 
+<div align="center">
+
 [⬅️ Назад](06-example-playbook.md) · [Далее ➡️](08-next-steps.md)
+
+<sub>●●●●●●●○ &nbsp; слайд 7 из 8</sub>
+
+</div>
