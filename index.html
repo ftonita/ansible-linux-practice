@@ -445,7 +445,7 @@
 }</pre></div>
       </div>
       <div class="ent" data-k="vars tpl"><div class="ei">📝</div><div><div class="et">Шаблон + переменные</div><div class="ed">Как бланк заявления: текст один, а имя и даты каждый вписывает свои. Один шаблон подходит для сотни сайтов.</div></div></div>
-      <div class="ent" data-k="hnd"><div class="ei">🔔</div><div><div class="et">Handler — «позвать, если что-то поменялось»</div><div class="ed">Как перезагрузка роутера: делаем её, только если правили настройки.</div>
+      <div class="ent" data-k="hnd"><div class="ei">🔔</div><div><div class="et">Handler — «позвать, если что-то поменялось»</div><div class="ed">Как перезагрузка роутера: делаем её, только если правили настройки. Срабатывает <b>в конце play</b>, подробно — на следующем слайде.</div>
         <div class="flowline" style="margin-top:8px"><span class="q">конфиг изменился?</span><span class="ar">→</span><span class="q y">да: reload</span><span class="q nn">нет: никого не трогаем</span></div></div></div>
     </div>
   </div>
@@ -454,6 +454,68 @@
     <p>Здесь появляются три новых понятия: переменные, шаблоны (Jinja2) и handlers.</p>
     <p>Шаблон — бланк с пропусками, переменные — то, что в него вписываем. Поменяли переменную port — конфиг пересоберётся сам. Тот же шаблон подойдёт для десятка сайтов.</p>
     <p>Handler срабатывает, только если задача с notify вернула changed. Запустили playbook второй раз, конфиг не изменился — nginx никто не дёргает. Это та же идемпотентность, только на уровне реакций.</p>
+    <p>Важно: handler выполняется не сразу после notify, а в конце play. Это разбираем на следующем слайде.</p>
+  </aside>
+</section>
+
+<!-- ======================= 09b HANDLERS TIMING ======================= -->
+<section data-title="Handlers: когда они срабатывают на самом деле" class="dom-ng">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Пример 3 из 5 · handlers подробно</div>
+    <h2>Handler срабатывает не в момент notify</h2>
+    <p class="lede md-p"><code class="i">notify</code> только <b>ставит handler в очередь</b>. Выполнится она в конце play — или раньше, на <code class="i">meta: flush_handlers</code>.</p>
+  </div>
+  <div class="body split">
+    <div class="l">
+      <script type="text/x-code" data-lang="yaml" data-title="web.yml" data-cls="xs">
+        - hosts: web
+          become: true
+          tasks:
+        #@tpl
+            - name: Конфиг сайта из шаблона
+              ansible.builtin.template:
+                src: site.conf.j2
+                dest: /etc/nginx/conf.d/shop.local.conf
+              notify: Reload nginx        # не запуск, а «в очередь»
+        #@flush
+            - name: Выполнить очередь прямо сейчас
+              ansible.builtin.meta: flush_handlers
+        #@check
+            - name: Сайт отвечает с новым конфигом
+              ansible.builtin.uri:
+                url: http://shop.local/health
+        #@hnd
+          handlers:
+            - name: Reload nginx           # имя = текст в notify
+              ansible.builtin.service: { name: nginx, state: reloaded }
+      </script>
+    </div>
+    <div class="r">
+      <div class="hbar">
+        <div class="seg" role="group" aria-label="Сценарий" id="hSeg">
+        <button aria-pressed="true" data-m="plain">Обычно</button>
+        <button aria-pressed="false" data-m="noflush">Проверка без flush</button>
+        <button aria-pressed="false" data-m="flush">С flush_handlers</button>
+      </div>
+        <button class="btn acc sm" id="hRun">▶ Запустить</button><button class="btn ghost sm" id="hReset" title="Сбросить сервер" aria-label="Сбросить сервер">⟲</button>
+      </div>
+      <div class="hstate" id="hState"></div>
+      <div class="file grow"><div class="fh">$ ansible-playbook web.yml</div><pre id="hLog" aria-live="polite"></pre></div>
+      <div class="analogy"><span class="ai">📋</span><div><span class="al">Аналогия</span><code class="i">notify</code> — заявка в журнал мастеру: он придёт <b>в конце смены</b>. <code class="i">flush_handlers</code> — позвать прямо сейчас. Смену сорвали — журнал потерян.</div></div>
+    </div>
+  </div>
+  <div class="hrules md-list">
+    <div class="ent"><div class="ei">📥</div><div><div class="et">notify = в очередь</div><div class="ed">и только если задача вернула <b>changed</b></div></div></div>
+    <div class="ent"><div class="ei">⏱️</div><div><div class="et">Очередь — в конце play</div><div class="ed">после каждой секции: pre_tasks, roles + tasks, post_tasks. Один раз, даже при 10 notify</div></div></div>
+    <div class="ent"><div class="ei">💥</div><div><div class="et">Упал — очередь пропала</div><div class="ed">при повторном запуске задача уже <b>ok</b>, notify не будет. Спасает <code class="i">--force-handlers</code></div></div></div>
+    <div class="ent"><div class="ei">⚡</div><div><div class="et">flush_handlers</div><div class="ed">когда следующей задаче нужен уже перезапущенный сервис</div></div></div>
+  </div>
+  <aside class="notes">
+    <p>Самая частая ловушка с handlers. notify не запускает handler, а только ставит его в очередь, и только если задача вернула changed.</p>
+    <p>Очередь выполняется в конце play. Точнее, после каждой секции: pre_tasks, затем roles вместе с tasks, затем post_tasks. Handler выполняется один раз, сколько бы задач его ни уведомили, и в порядке секции handlers, а не в порядке notify.</p>
+    <p>Демо, сценарий «Проверка без flush»: шаблон поменялся, reload стоит в очереди, но проверка сайта идёт раньше и падает, потому что nginx ещё работает со старым конфигом. Play прерван, очередь потеряна. Нажать «Запустить» ещё раз: шаблон уже ok, notify не случается, и мы застряли навсегда. Выход: ansible-playbook --force-handlers (или force_handlers: true в play), либо поставить meta: flush_handlers перед задачей, которой нужен перезапущенный сервис.</p>
+    <p>Сценарий «С flush_handlers»: очередь выполняется прямо в середине play, и проверка проходит.</p>
+    <p>Ещё одна мелочь: имя в notify должно совпадать с name handler-а буква в букву (или использовать listen), иначе Ansible выдаст ошибку.</p>
   </aside>
 </section>
 
@@ -709,7 +771,7 @@
   <h3 style="margin-top:26px">Проверьте себя <span class="muted small">(нажмите на карточку)</span></h3>
   <div class="qa">
     <button class="flip" aria-expanded="false"><span class="q">Почему <code class="i">shell: echo &gt;&gt; file</code> — плохой кирпичик?</span><span class="a">Он не идемпотентен: каждый запуск дописывает строку заново. <code class="i">lineinfile</code> проверяет, есть ли строка, и меняет только разницу.</span><span class="tap">показать ответ →</span></button>
-    <button class="flip" aria-expanded="false"><span class="q">Когда сработает handler <code class="i">Reload nginx</code>?</span><span class="a">Только когда задача с <code class="i">notify</code> вернула <b>changed</b>, то есть конфиг действительно изменился. И один раз в конце, даже если уведомили несколько раз.</span><span class="tap">показать ответ →</span></button>
+    <button class="flip" aria-expanded="false"><span class="q">Когда сработает handler <code class="i">Reload nginx</code>?</span><span class="a">Только если задача с <code class="i">notify</code> вернула <b>changed</b>. По умолчанию — один раз в конце play; раньше — через <code class="i">meta: flush_handlers</code>. Если play упал до этого, handler не выполнится (нужен <code class="i">--force-handlers</code>).</span><span class="tap">показать ответ →</span></button>
     <button class="flip" aria-expanded="false"><span class="q">Как прочитать <code class="i">community.postgresql.postgresql_user</code>?</span><span class="a">Производитель <b>community</b> · коллекция <b>postgresql</b> · модуль <b>postgresql_user</b>. Ставится через <code class="i">ansible-galaxy collection install</code>.</span><span class="tap">показать ответ →</span></button>
   </div>
   <div class="callout md-p" style="margin-top:18px">📌 <b>Дальше на практике:</b> разложим наш playbook на роли, подключим коллекции через <code class="i">requirements.yml</code> и проверим идемпотентность повторным запуском.</div>

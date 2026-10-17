@@ -1,4 +1,4 @@
-<sub>ИТОГИ · слайд 15 из 15</sub>
+<sub>ИТОГИ · слайд 16 из 16</sub>
 
 # От кирпичика до инфраструктуры
 
@@ -19,7 +19,7 @@
 
 <details><summary><b>Когда сработает handler `Reload nginx`?</b></summary>
 
-Только когда задача с `notify` вернула **changed**, то есть конфиг действительно изменился. И один раз в конце, даже если уведомили несколько раз.
+Только если задача с `notify` вернула **changed**. По умолчанию — один раз в конце play; раньше — через `meta: flush_handlers`. Если play упал до этого, handler не выполнится (нужен `--force-handlers`).
 
 </details>
 
@@ -48,6 +48,6 @@
 
 <div align="center">
 
-[⬅️ Назад](14-iac.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#15) · [🏠 К началу](01-title.md)
+[⬅️ Назад](15-iac.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#16) · [🏠 К началу](01-title.md)
 
 </div>

@@ -1,4 +1,4 @@
-<sub>ИНФРАСТРУКТУРА КАК КОД · слайд 14 из 15</sub>
+<sub>ИНФРАСТРУКТУРА КАК КОД · слайд 15 из 16</sub>
 
 # Чертёж в архиве важнее самого дома
 
@@ -26,6 +26,6 @@ Infrastructure as Code: сервер описан текстом, текст л�
 
 <div align="center">
 
-[⬅️ Назад](13-collections.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#14) · [Далее ➡️](15-summary.md)
+[⬅️ Назад](14-collections.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#15) · [Далее ➡️](16-summary.md)
 
 </div>

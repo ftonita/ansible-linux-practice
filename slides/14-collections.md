@@ -1,4 +1,4 @@
-<sub>СТРУКТУРА · КОЛЛЕКЦИИ · слайд 13 из 15</sub>
+<sub>СТРУКТУРА · КОЛЛЕКЦИИ · слайд 14 из 16</sub>
 
 # Коллекции: откуда берутся кирпичики
 
@@ -51,6 +51,6 @@ requirements.yml фиксирует, какие коллекции нужны п
 
 <div align="center">
 
-[⬅️ Назад](12-roles.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#13) · [Далее ➡️](14-iac.md)
+[⬅️ Назад](13-roles.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#14) · [Далее ➡️](15-iac.md)
 
 </div>

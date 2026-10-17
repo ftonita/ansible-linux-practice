@@ -16,7 +16,7 @@ SITE = "https://ftonita.github.io/ansible-linux-practice/"
 
 SLUGS = [
     "title", "why", "declarative", "module", "idempotency", "catalog",
-    "example-os-firewall", "example-users-ssh", "example-nginx", "example-postgresql",
+    "example-os-firewall", "example-users-ssh", "example-nginx", "handlers", "example-postgresql",
     "example-docker", "roles", "collections", "iac", "summary",
 ]
 LANG = {"yaml": "yaml", "bash": "bash", "conf": "nginx", "tree": "text", "text": "text"}
@@ -147,7 +147,7 @@ class Walker:
                     self.ents.append((text(el), text(sm)))
                 else:
                     self.emit(f"**{text(el)}**")
-            elif any(k in cls for k in ("ctl", "file", "bulb-row", "seg", "track", "card", "outs", "arrow-d", "house", "link", "big-num")) and "md-list" not in cls:
+            elif any(k in cls for k in ("ctl", "file", "bulb-row", "seg", "hstate", "track", "card", "outs", "arrow-d", "house", "link", "big-num")) and "md-list" not in cls:
                 if "big-num" in cls:
                     self.walk(el)
                 if "outs" in cls:

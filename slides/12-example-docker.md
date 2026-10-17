@@ -1,4 +1,4 @@
-<sub>ПРИМЕР 5 ИЗ 5 · КОНТЕЙНЕРЫ · слайд 11 из 15</sub>
+<sub>ПРИМЕР 5 ИЗ 5 · КОНТЕЙНЕРЫ · слайд 12 из 16</sub>
 
 # Docker: сеть, том и контейнер — тоже кирпичики
 
@@ -46,6 +46,6 @@
 
 <div align="center">
 
-[⬅️ Назад](10-example-postgresql.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#11) · [Далее ➡️](12-roles.md)
+[⬅️ Назад](11-example-postgresql.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#12) · [Далее ➡️](13-roles.md)
 
 </div>

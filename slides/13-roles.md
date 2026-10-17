@@ -1,4 +1,4 @@
-<sub>СТРУКТУРА · РОЛИ · слайд 12 из 15</sub>
+<sub>СТРУКТУРА · РОЛИ · слайд 13 из 16</sub>
 
 # Роль — готовый блок из кирпичиков
 
@@ -48,6 +48,6 @@ site.yml — вся инфраструктура на одном экране. �
 
 <div align="center">
 
-[⬅️ Назад](11-example-docker.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#12) · [Далее ➡️](13-collections.md)
+[⬅️ Назад](12-example-docker.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#13) · [Далее ➡️](14-collections.md)
 
 </div>

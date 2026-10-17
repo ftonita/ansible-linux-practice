@@ -121,3 +121,90 @@
     f.onclick = function () { f.setAttribute("aria-expanded", f.getAttribute("aria-expanded") === "true" ? "false" : "true"); };
   });
 })();
+
+/* --- handlers timing simulator --- */
+(function () {
+  "use strict";
+  function $(id) { return document.getElementById(id); }
+  var mode = "plain", disk = false, live = false, timers = [], runs = 0;
+  var TASKS = { plain: ["tpl"], noflush: ["tpl", "check"], flush: ["tpl", "flush", "check"] };
+  var segs = [].slice.call(document.querySelectorAll("#hSeg button"));
+  function state(queue) {
+    $("hState").innerHTML =
+      '<span class="' + (disk ? "good" : "") + '">конфиг на диске: <b>' + (disk ? "новый" : "старый") + "</b></span>" +
+      '<span class="' + (live ? "good" : disk ? "warn" : "") + '">nginx работает с: <b>' + (live ? "новым" : "старым") + "</b></span>" +
+      '<span class="' + (queue && queue.length ? "warn" : "") + '">очередь handlers: <b>' + (queue && queue.length ? queue.join(", ") : "пусто") + "</b></span>";
+  }
+  function reset(keepServer) {
+    timers.forEach(clearTimeout); timers = [];
+    if (!keepServer) { disk = false; live = false; runs = 0; }
+    $("hLog").innerHTML = '<span class="dim">Выберите сценарий и нажмите «Запустить»</span>';
+    state([]);
+  }
+  function run() {
+    timers.forEach(clearTimeout); timers = [];
+    runs++;
+    var out = [], queue = [], failed = false, note = "";
+    function line(t, delay) { out.push([t, delay]); }
+    function snap() { var q = queue.slice(), d = disk, l = live; return function () { var D = disk, L = live; disk = d; live = l; state(q); disk = D; live = L; }; }
+    var snaps = [];
+    function push(t, s) { out.push(t); snaps.push(s || null); }
+    TASKS[mode].forEach(function (t) {
+      if (failed) return;
+      if (t === "tpl") {
+        push('TASK [Конфиг сайта из шаблона]');
+        if (!disk) { disk = true; queue.push("Reload nginx"); push('<span class="ch">changed</span>: [web-1]  <span class="dim">→ Reload nginx встал в очередь</span>', snap()); }
+        else push('<span class="ok">ok</span>: [web-1]  <span class="dim">→ ничего не изменилось, notify не отправлен</span>', snap());
+      } else if (t === "flush") {
+        push('TASK [meta: flush_handlers]');
+        if (queue.length) { live = true; push('<span class="h">RUNNING HANDLER [Reload nginx]</span>'); push('<span class="ch">changed</span>: [web-1]', (queue = [], snap())); }
+        else push('<span class="dim">очередь пуста — делать нечего</span>', snap());
+      } else if (t === "check") {
+        push('TASK [Сайт отвечает с новым конфигом]');
+        if (live) push('<span class="ok">ok</span>: [web-1]', snap());
+        else {
+          failed = true;
+          push('<span class="fail">fatal: [web-1]: FAILED!</span> <span class="dim">nginx ещё со старым конфигом</span>', snap());
+          if (queue.length) { push('<span class="fail">play прерван → очередь потеряна, Reload nginx НЕ выполнен</span>', (queue = [], snap())); }
+        }
+      }
+    });
+    if (!failed && queue.length) {
+      push('<span class="h">RUNNING HANDLER [Reload nginx]</span> <span class="dim">← конец play</span>');
+      live = true; queue = [];
+      push('<span class="ch">changed</span>: [web-1]', snap());
+    }
+    push(failed ? '<span class="fail">PLAY RECAP: web-1 failed=1</span>' : '<span class="ok">PLAY RECAP: web-1 failed=0</span>');
+    if (failed && !disk) note = "";
+    if (mode === "noflush" && failed) note = runs > 1 ? "Застряли: шаблон уже ok, notify больше не придёт. Нужен flush_handlers или --force-handlers." : "Нажмите «Запустить» ещё раз — что изменится?";
+    else if (mode === "flush") note = "Очередь выполнена до проверки — сайт отвечает.";
+    else if (mode === "plain") note = runs > 1 && !out.join("").includes("RUNNING") ? "Конфиг не менялся — handler не нужен." : "Handler выполнился в самом конце play.";
+    var log = $("hLog"); log.innerHTML = "";
+    out.forEach(function (t, i) {
+      timers.push(setTimeout(function () {
+        log.innerHTML += t + "\n";
+        if (snaps[i]) snaps[i]();
+        log.scrollTop = log.scrollHeight;
+        if (i === out.length - 1 && note) { log.innerHTML += '<span class="note">💬 ' + note + "</span>\n"; log.scrollTop = log.scrollHeight; }
+      }, i * 170));
+    });
+  }
+  segs.forEach(function (b) {
+    b.onclick = function () {
+      mode = b.dataset.m;
+      segs.forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      scn(); reset(false);
+    };
+  });
+  function scn() {
+    var sec = $("hSeg").closest("section");
+    [].forEach.call(sec.querySelectorAll(".blk[data-k]"), function (bl) {
+      var k = bl.dataset.k;
+      bl.classList.toggle("scn-off", (k === "flush" || k === "check") && TASKS[mode].indexOf(k) < 0);
+    });
+  }
+  scn();
+  $("hRun").onclick = run;
+  $("hReset").onclick = function () { reset(false); };
+  reset(false);
+})();

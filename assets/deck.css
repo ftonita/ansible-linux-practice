@@ -109,6 +109,7 @@ h3 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.01em; }
   border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--ink2);
 }
 code.i {
+  white-space: nowrap;
   background: var(--soft); border: 1px solid var(--line); border-radius: 6px;
   padding: .05em .35em; font-size: .86em; color: var(--ink);
 }
@@ -389,6 +390,30 @@ ul.ticks.good li::before, .good ul.ticks li::before { content: "✓"; background
 .flowline .y { background: #e7f7ee; border-color: #b3e2c8; color: #0e7a43; font-weight: 600; }
 .flowline .nn { background: var(--soft); color: var(--mut); }
 .flowline .ar { color: var(--mut); font-weight: 800; }
+
+/* ---------- handlers timing ---------- */
+.hbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.hbar .seg { margin-right: auto; }
+.hstate { display: flex; gap: 8px; flex-wrap: wrap; }
+.hstate span { font-size: 14px; padding: 5px 10px; border-radius: 9px; background: var(--soft); border: 1px solid var(--line); color: var(--ink2); }
+.hstate span b { color: var(--ink); }
+.hstate .warn { background: #fff4d6; border-color: #f4d58a; }
+.hstate .good { background: #e7f7ee; border-color: #b3e2c8; }
+#hLog { font-size: 14.5px; min-height: 0; }
+#hLog .h { color: #6d28d9; font-weight: 700; }
+#hLog .ok { color: #0e7a43; font-weight: 700; }
+#hLog .ch { color: #9a5b00; font-weight: 700; }
+#hLog .fail { color: #be123c; font-weight: 700; }
+#hLog .dim { color: var(--mut); }
+#hLog .note { display: inline-block; white-space: normal; font-family: var(--sans); font-size: 14.5px; color: var(--ink); background: var(--soft); border-radius: 8px; padding: 4px 8px; margin-top: 4px; }
+.hrules { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-top: 14px; flex: none; }
+.hrules .ent { padding: 9px 12px; gap: 10px; }
+.hrules .ei { width: 34px; height: 34px; font-size: 18px; border-radius: 10px; }
+.hrules .et { font-size: 16px; }
+.hrules .ed { font-size: 14px; }
+#hLog { min-height: 120px; font-size: 14px; line-height: 1.45; }
+.code pre .blk.scn-off { opacity: .3; }
+body.flow .hrules { grid-template-columns: 1fr; }
 
 /* ---------- roles house ---------- */
 .rhouse { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }

@@ -1,4 +1,4 @@
-<sub>ПРИМЕР 4 ИЗ 5 · БАЗА ДАННЫХ · слайд 10 из 15</sub>
+<sub>ПРИМЕР 4 ИЗ 5 · БАЗА ДАННЫХ · слайд 11 из 16</sub>
 
 # PostgreSQL: описываем сущности базы как код
 
@@ -55,6 +55,6 @@
 
 <div align="center">
 
-[⬅️ Назад](09-example-nginx.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#10) · [Далее ➡️](11-example-docker.md)
+[⬅️ Назад](10-handlers.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#11) · [Далее ➡️](12-example-docker.md)
 
 </div>
