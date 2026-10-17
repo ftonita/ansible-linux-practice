@@ -25,6 +25,6 @@
 
 <div align="center">
 
-[▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#1) · [Далее ➡️](02-why.md)
+[▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#1) · [Далее ➡️](02-why.md)
 
 </div>

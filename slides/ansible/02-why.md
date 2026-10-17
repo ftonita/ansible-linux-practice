@@ -40,6 +40,6 @@ Ansible — инструмент, который превращает настр
 
 <div align="center">
 
-[⬅️ Назад](01-title.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#2) · [Далее ➡️](03-declarative.md)
+[⬅️ Назад](01-title.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#2) · [Далее ➡️](03-declarative.md)
 
 </div>

@@ -53,6 +53,6 @@
 
 <div align="center">
 
-[⬅️ Назад](07-example-os-firewall.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#8) · [Далее ➡️](09-example-nginx.md)
+[⬅️ Назад](07-example-os-firewall.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#8) · [Далее ➡️](09-example-nginx.md)
 
 </div>

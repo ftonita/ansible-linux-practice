@@ -51,6 +51,6 @@ requirements.yml фиксирует, какие коллекции нужны п
 
 <div align="center">
 
-[⬅️ Назад](13-roles.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#14) · [Далее ➡️](15-iac.md)
+[⬅️ Назад](13-roles.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#14) · [Далее ➡️](15-iac.md)
 
 </div>

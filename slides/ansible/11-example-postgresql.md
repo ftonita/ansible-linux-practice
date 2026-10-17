@@ -55,6 +55,6 @@
 
 <div align="center">
 
-[⬅️ Назад](10-handlers.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#11) · [Далее ➡️](12-example-docker.md)
+[⬅️ Назад](10-handlers.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#11) · [Далее ➡️](12-example-docker.md)
 
 </div>

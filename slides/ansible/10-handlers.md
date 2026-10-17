@@ -50,6 +50,6 @@
 
 <div align="center">
 
-[⬅️ Назад](09-example-nginx.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#10) · [Далее ➡️](11-example-postgresql.md)
+[⬅️ Назад](09-example-nginx.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#10) · [Далее ➡️](11-example-postgresql.md)
 
 </div>

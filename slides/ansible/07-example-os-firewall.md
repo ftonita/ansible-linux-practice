@@ -53,6 +53,6 @@
 
 <div align="center">
 
-[⬅️ Назад](06-catalog.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#7) · [Далее ➡️](08-example-users-ssh.md)
+[⬅️ Назад](06-catalog.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#7) · [Далее ➡️](08-example-users-ssh.md)
 
 </div>

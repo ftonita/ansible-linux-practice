@@ -41,6 +41,6 @@
 
 <div align="center">
 
-[⬅️ Назад](04-module.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#5) · [Далее ➡️](06-catalog.md)
+[⬅️ Назад](04-module.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#5) · [Далее ➡️](06-catalog.md)
 
 </div>

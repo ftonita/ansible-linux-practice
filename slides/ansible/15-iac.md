@@ -26,6 +26,6 @@ Infrastructure as Code: сервер описан текстом, текст л�
 
 <div align="center">
 
-[⬅️ Назад](14-collections.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#15) · [Далее ➡️](16-summary.md)
+[⬅️ Назад](14-collections.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#15) · [Далее ➡️](16-summary.md)
 
 </div>

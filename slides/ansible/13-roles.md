@@ -48,6 +48,6 @@ site.yml — вся инфраструктура на одном экране. �
 
 <div align="center">
 
-[⬅️ Назад](12-example-docker.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#13) · [Далее ➡️](14-collections.md)
+[⬅️ Назад](12-example-docker.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#13) · [Далее ➡️](14-collections.md)
 
 </div>

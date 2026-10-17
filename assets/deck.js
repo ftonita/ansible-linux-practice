@@ -10,6 +10,7 @@
   var deckEl = document.getElementById("deck");
   var S = [].slice.call(deckEl.children).filter(function (n) { return n.tagName === "SECTION"; });
   var N = S.length, cur = 0, step = 0, hoverKey = null;
+  var BASE_TITLE = document.title;
 
   /* ---------------- code rendering & highlighting ---------------- */
   function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
@@ -100,6 +101,7 @@
     box.innerHTML = '<div class="ct"><i></i><i></i><i></i><span>' + esc(sc.dataset.title || "") + '</span><span class="lang">' +
       ({ yaml: "YAML", bash: "Bash", conf: "Jinja2", tree: "", text: "" }[lang] || "") + "</span></div><pre>" + html + "</pre>";
     if (sc.id) box.id = sc.id;
+    if (sc.dataset.v) box.dataset.v = sc.dataset.v;
     sc.parentNode.replaceChild(box, sc);
   }
   [].slice.call(document.querySelectorAll('script[type="text/x-code"]')).forEach(renderCode);
@@ -161,7 +163,7 @@
   var bar = document.querySelector(".progress i"), cnt = document.getElementById("cnt");
   var prevB = document.getElementById("prevB"), nextB = document.getElementById("nextB");
   var chan = null;
-  try { chan = new BroadcastChannel("ansible-deck"); } catch (e) {}
+  try { chan = new BroadcastChannel("deck:" + location.pathname); } catch (e) {}
   var applyingRemote = false;
 
   function render(fromRemote) {
@@ -179,7 +181,7 @@
     if (nextB) nextB.disabled = cur === N - 1 && step >= ks;
     if (!EMBED) {
       try { history.replaceState(null, "", "#" + (cur + 1)); } catch (e) {}
-      document.title = S[cur].dataset.title + " — Ansible: кирпичики инфраструктуры";
+      document.title = S[cur].dataset.title + " — " + BASE_TITLE;
     }
     renderMenu(); renderNotes();
     if (body.classList.contains("flow")) scrollTo(0, 0);
@@ -281,7 +283,7 @@
   document.getElementById("fsB").onclick = toggleFS;
   function openPresenter() {
     var u = location.pathname + "?presenter#" + (cur + 1);
-    window.open(u, "ansible-presenter", "width=1280,height=760");
+    window.open(u, "presenter" + location.pathname, "width=1280,height=760");
   }
   document.getElementById("presB").onclick = openPresenter;
 

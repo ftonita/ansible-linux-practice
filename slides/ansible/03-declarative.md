@@ -60,6 +60,6 @@ fi
 
 <div align="center">
 
-[⬅️ Назад](02-why.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#3) · [Далее ➡️](04-module.md)
+[⬅️ Назад](02-why.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#3) · [Далее ➡️](04-module.md)
 
 </div>

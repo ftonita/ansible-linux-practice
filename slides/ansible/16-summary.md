@@ -32,7 +32,7 @@
 > [!NOTE]
 > 📌 **Дальше на практике:** разложим наш playbook на роли, подключим коллекции через `requirements.yml` и проверим идемпотентность повторным запуском.
 
-🙌 Спасибо! Вопросы?
+🙌 Спасибо! Вопросы? [Часть 2: безопасный Linux-сервер →](../linux/)
 
 <details><summary>🎤 Заметки лектора</summary>
 
@@ -48,6 +48,6 @@
 
 <div align="center">
 
-[⬅️ Назад](15-iac.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#16) · [🏠 К началу](01-title.md)
+[⬅️ Назад](15-iac.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#16) · [🏠 К началу](01-title.md)
 
 </div>

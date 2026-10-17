@@ -81,6 +81,6 @@ Handler срабатывает, только если задача с notify в�
 
 <div align="center">
 
-[⬅️ Назад](08-example-users-ssh.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#9) · [Далее ➡️](10-handlers.md)
+[⬅️ Назад](08-example-users-ssh.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#9) · [Далее ➡️](10-handlers.md)
 
 </div>

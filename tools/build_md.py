@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate slides/NN-*.md from index.html (single source of truth).
+"""Generate slides/<deck>/NN-*.md from <deck>/index.html (single source of truth).
 
 Usage: python3 tools/build_md.py
 """
@@ -10,11 +10,10 @@ from pathlib import Path
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "index.html"
-OUT = ROOT / "slides"
 SITE = "https://ftonita.github.io/ansible-linux-practice/"
 
-SLUGS = [
+LINUX_SLUGS = ["title", "threats", "updates", "user-keys", "ssh-hardening", "firewall", "fail2ban", "checklist"]
+ANSIBLE_SLUGS = [
     "title", "why", "declarative", "module", "idempotency", "catalog",
     "example-os-firewall", "example-users-ssh", "example-nginx", "handlers", "example-postgresql",
     "example-docker", "roles", "collections", "iac", "summary",
@@ -76,7 +75,29 @@ class Walker:
             if not isinstance(el, Tag):
                 continue
             cls = el.get("class", [])
-            if el.name == "aside" or "hint" in cls or "sh" in cls:
+            if el.name == "aside" or "hint" in cls or "sh" in cls or "viewtabs" in cls or "counter" in cls:
+                continue
+            if el.name == "table":
+                rows = el.find_all("tr")
+                cells = [[text(c) for c in r.find_all(["th", "td"])] for r in rows]
+                if cells:
+                    md = ["| " + " | ".join(cells[0]) + " |", "|" + "---|" * len(cells[0])]
+                    md += ["| " + " | ".join(r) + " |" for r in cells[1:]]
+                    self.emit("\n".join(md))
+                continue
+            if "md-hs" in cls:
+                self.emit("**🤝 Как сервер проверяет ключ:**\n" + "\n".join(f"{i}. {text(s.find('div'))}" for i, s in enumerate(el.select('.hstep'), 1)))
+                continue
+            if "order" in cls:
+                for wn in el.select(".warn"):
+                    wn.insert_before(" — ")
+                self.emit("\n".join(f"- [ ] {text(li)}" for li in el.find_all("li")))
+                continue
+            if "principles" in cls:
+                self.emit("**Принципы:** " + " · ".join(text(x) for x in el.select(".tag")))
+                continue
+            if "md-only" in cls and "md-p" not in cls:
+                self.walk(el)
                 continue
             if el.name == "script" and el.get("type") == "text/x-code":
                 self.emit(code_block(el))
@@ -114,9 +135,9 @@ class Walker:
                     elif c.name == "li":
                         lines.append("- " + text(c))
                     else:
-                        ic = c.select_one(".pi, .ri, .ei")
+                        ic = c.select_one(".pi, .ri, .ei, .li")
                         bt = c.find("b")
-                        sp = [x for x in c.find_all("span") if not x.find("b")]
+                        sp = [x for x in c.find_all("span") if not x.find("b") and x is not ic]
                         desc = " ".join(text(x) for x in sp if x is not ic)
                         lines.append("- " + (text(ic) + " " if ic else "") + (f"**{bt.get_text().strip()}**" if bt else "") +
                                      (" — " + desc if desc else ""))
@@ -171,13 +192,16 @@ class Walker:
         return self
 
 
-def main():
-    soup = BeautifulSoup(SRC.read_text(encoding="utf-8"), "html.parser")
+def build(deck, slugs):
+    src = ROOT / deck / "index.html"
+    out = ROOT / "slides" / deck
+    soup = BeautifulSoup(src.read_text(encoding="utf-8"), "html.parser")
     sections = soup.select("main#deck > section")
-    for old in OUT.glob("*.md"):
+    out.mkdir(parents=True, exist_ok=True)
+    for old in out.glob("*.md"):
         old.unlink()
-    OUT.mkdir(exist_ok=True)
-    names = [f"{i:02d}-{SLUGS[i-1]}.md" for i in range(1, len(sections) + 1)]
+    names = [f"{i:02d}-{slugs[i-1]}.md" for i in range(1, len(sections) + 1)]
+    site = f"{SITE}{deck}/"
     for i, sec in enumerate(sections, 1):
         kick = sec.select_one(".kicker")
         for n in kick.select(".n"):
@@ -195,11 +219,16 @@ def main():
             md.append("<details><summary>🎤 Заметки лектора</summary>\n\n" +
                       "\n\n".join(text(p) for p in notes.find_all("p")) + "\n\n</details>")
         prev = f"[⬅️ Назад]({names[i-2]})" if i > 1 else ""
-        nxt = f"[Далее ➡️]({names[i]})" if i < len(sections) else "[🏠 К началу](01-title.md)"
-        nav = " · ".join(x for x in (prev, f"[▶️ Интерактивная версия]({SITE}#{i})", nxt) if x)
+        nxt = f"[Далее ➡️]({names[i]})" if i < len(sections) else f"[🏠 К началу](01-{slugs[0]}.md)"
+        nav = " · ".join(x for x in (prev, f"[▶️ Интерактивная версия]({site}#{i})", nxt) if x)
         md.append(f"---\n\n<div align=\"center\">\n\n{nav}\n\n</div>")
-        (OUT / names[i - 1]).write_text("\n\n".join(md).rstrip() + "\n", encoding="utf-8")
-    print(f"wrote {len(sections)} slides to {OUT}")
+        (out / names[i - 1]).write_text("\n\n".join(md).rstrip() + "\n", encoding="utf-8")
+    print(f"{deck}: wrote {len(sections)} slides to {out}")
+
+
+def main():
+    build("ansible", ANSIBLE_SLUGS)
+    build("linux", LINUX_SLUGS)
 
 
 if __name__ == "__main__":

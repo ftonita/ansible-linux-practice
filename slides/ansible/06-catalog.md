@@ -29,6 +29,6 @@
 
 <div align="center">
 
-[⬅️ Назад](05-idempotency.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#6) · [Далее ➡️](07-example-os-firewall.md)
+[⬅️ Назад](05-idempotency.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#6) · [Далее ➡️](07-example-os-firewall.md)
 
 </div>

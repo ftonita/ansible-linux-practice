@@ -46,6 +46,6 @@
 
 <div align="center">
 
-[⬅️ Назад](11-example-postgresql.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#12) · [Далее ➡️](13-roles.md)
+[⬅️ Назад](11-example-postgresql.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#12) · [Далее ➡️](13-roles.md)
 
 </div>

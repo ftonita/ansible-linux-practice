@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="Часть 2: безопасная базовая настройка Linux-сервера — обновления, sudo-пользователь, SSH-ключи, запрет root и паролей, firewall, fail2ban. Руками и через Ansible.">
+<title>Безопасный Linux-сервер</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4 56 12v18c0 15-10 26-24 30C18 56 8 45 8 30V12z' fill='%2315803d'/%3E%3Cpath d='m22 32 7 7 14-15' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap&subset=cyrillic" rel="stylesheet">
+<link rel="stylesheet" href="../assets/deck.css">
+</head>
+<body class="theme-green" data-view="manual">
+<noscript><div class="noscript">Для презентации нужен JavaScript. Текстовая версия — в папке <a href="https://github.com/ftonita/ansible-linux-practice/tree/claude/gifted-gates-hj4v3p/slides/linux">slides/linux/</a>.</div></noscript>
+<div class="stage">
+<main class="deck" id="deck">
+
+<!-- ======================= 01 TITLE ======================= -->
+<section data-title="Безопасный Linux-сервер" class="dom-ng">
+  <div class="sh"><div class="kicker"><span class="n"></span>Часть 2 · Linux · первичная настройка</div></div>
+  <div class="hero">
+    <div>
+      <h1>Сервер, который<br>не стыдно <em>выставить<br>в интернет</em></h1>
+      <p class="lede md-p">Базовая и безопасная настройка Linux-сервера: <b>что делать в первые 15 минут</b> и почему именно в таком порядке. Каждый шаг показан руками и в Ansible.</p>
+      <div class="agenda md-list">
+        <span><b>1</b>Угрозы</span><span><b>2</b>Обновления</span><span><b>3</b>Пользователь и ключи</span>
+        <span><b>4</b>Закрываем SSH</span><span><b>5</b>Firewall и порты</span><span><b>6</b>fail2ban</span><span><b>7</b>Чек-лист</span>
+      </div>
+    </div>
+    <div class="layers" aria-hidden="true" style="max-width:560px;justify-self:center;width:100%">
+      <div class="layer dom-gr" style="--d:0"><span class="li">🔄</span><div><b>Обновления</b><span>закрытые дыры</span></div><em>apt</em></div>
+      <div class="layer dom-us"><span class="li">👤</span><div><b>Свой пользователь + sudo</b><span>не работаем под root</span></div><em>user</em></div>
+      <div class="layer dom-us"><span class="li">🔑</span><div><b>SSH-ключи</b><span>вместо паролей</span></div><em>ed25519</em></div>
+      <div class="layer dom-dk"><span class="li">🚪</span><div><b>Закрытый root и пароли</b><span>sshd_config</span></div><em>sshd</em></div>
+      <div class="layer dom-fw"><span class="li">🧱</span><div><b>Firewall</b><span>только нужные порты</span></div><em>ufw</em></div>
+      <div class="layer dom-id"><span class="li">🛡️</span><div><b>fail2ban</b><span>бан за перебор</span></div><em>jail</em></div>
+    </div>
+  </div>
+  <div class="hint"><kbd>→</kbd> далее · <kbd>F</kbd> полный экран · <kbd>P</kbd> режим докладчика · <a href="../" style="color:inherit">← к курсу</a></div>
+  <aside class="notes">
+    <p>Связка с первой частью: там мы поняли, что Ansible собирает сервер из кирпичиков. Теперь разберём, какие кирпичики должны лежать в фундаменте любого сервера, чтобы его не взломали в первую же ночь.</p>
+    <p>Справа — слои защиты. Это принцип «эшелонированной обороны»: ни один слой не идеален, но вместе они прикрывают ошибки друг друга.</p>
+    <p>На каждом слайде с кодом есть переключатель «Руками / В Ansible». Сначала понимаем, что делаем в Linux, а потом видим, как то же самое становится задачей в playbook.</p>
+  </aside>
+</section>
+
+<!-- ======================= 02 THREATS ======================= -->
+<section data-title="Сервер атакуют с первой минуты" class="dom-fw">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Угрозы</div>
+    <h2>Публичный сервер атакуют почти сразу</h2>
+    <p class="lede md-p">Боты непрерывно сканируют интернет и перебирают пароли к SSH. Новый сервер с открытым 22-м портом обычно получает первые попытки входа <b>в течение минут или часов</b>.</p>
+  </div>
+  <div class="body split">
+    <div class="l">
+      <div class="code authlog grow"><div class="ct"><i></i><i></i><i></i><span>sudo journalctl -u ssh -f</span><span class="lang">live</span></div><pre id="authLog"></pre></div>
+      <div class="counter"><b id="authCnt">0</b><span>попыток входа с момента открытия слайда</span></div>
+      <div class="analogy"><span class="ai">🚪</span><div><span class="al">Аналогия</span>Дверь, выходящая на оживлённую улицу: кто-то постоянно дёргает ручку. Это не персональная атака, а <b>автоматический обход всех дверей подряд</b>.</div></div>
+    </div>
+    <div class="r">
+      <h3 style="margin:0">🏰 Эшелонированная оборона</h3>
+      <div class="muted small" style="margin-top:-6px">Каждый слой прикрывает ошибку предыдущего. Нажмите, чтобы перейти к слайду.</div>
+      <div class="layers md-list">
+        <button class="layer dom-gr" data-go="3"><span class="li">🔄</span><div><b>Обновления</b><span>известные уязвимости закрыты</span></div><em>слайд 3</em></button>
+        <button class="layer dom-us" data-go="4"><span class="li">🔑</span><div><b>Свой пользователь и ключи</b><span>пароль нечего подбирать</span></div><em>слайд 4</em></button>
+        <button class="layer dom-dk" data-go="5"><span class="li">🚪</span><div><b>Закрытый root и вход по паролю</b><span>главная цель ботов недоступна</span></div><em>слайд 5</em></button>
+        <button class="layer dom-fw" data-go="6"><span class="li">🧱</span><div><b>Firewall и минимум сервисов</b><span>меньше дверей — меньше риска</span></div><em>слайд 6</em></button>
+        <button class="layer dom-id" data-go="7"><span class="li">🛡️</span><div><b>fail2ban</b><span>настойчивых гостей не пускаем</span></div><em>слайд 7</em></button>
+      </div>
+      <div class="principles"><span class="tag">наименьшие привилегии</span><span class="tag">минимум открытых дверей</span><span class="tag">несколько линий обороны</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Лог слева — имитация, но очень похожая на правду: такие строки появляются в journalctl -u ssh на любом сервере с открытым SSH. Чаще всего перебирают root, admin, ubuntu, test.</p>
+    <p>Важная мысль для новичков: вас атакуют не потому, что вы интересны. Боты проверяют все адреса подряд, и слабый пароль найдут быстро.</p>
+    <p>Три принципа внизу справа — основа всей лекции: давать только нужные права, держать открытыми только нужные двери и не полагаться на одну защиту.</p>
+  </aside>
+</section>
+
+<!-- ======================= 03 UPDATES ======================= -->
+<section data-title="Обновления: латаем известные дыры" class="dom-gr">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Слой 1 · Обновления</div>
+    <h2>Обновления — заплатки на уже известных дырах</h2>
+  </div>
+  <div class="body split n44">
+    <div class="l dualcode">
+      <div class="viewtabs" role="group" aria-label="Способ"><button data-view="manual">🐧 Руками</button><button data-view="ansible">⚙️ В Ansible</button></div>
+      <script type="text/x-code" data-v="manual" data-lang="bash" data-title="Руками · терминал" data-cls="">
+        #@cache
+        # 1. обновить список пакетов
+        sudo apt update
+        #@upgrade
+        # 2. что можно обновить?
+        apt list --upgradable
+        # 3. поставить обновления
+        sudo apt upgrade -y
+        #@reboot
+        # 4. нужна перезагрузка (новое ядро)?
+        ls /var/run/reboot-required
+        sudo reboot
+      </script>
+      <script type="text/x-code" data-v="ansible" data-lang="yaml" data-title="Ansible · updates.yml" data-cls="sm">
+        #@cache
+        - name: Обновить список пакетов
+          ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 3600
+        #@upgrade
+        - name: Поставить обновления
+          ansible.builtin.apt:
+            upgrade: safe
+        #@reboot
+        - name: Нужна ли перезагрузка?
+          ansible.builtin.stat:
+            path: /var/run/reboot-required
+          register: reboot_flag
+
+        - name: Перезагрузить, если нужно
+          ansible.builtin.reboot:
+          when: reboot_flag.stat.exists
+      </script>
+    </div>
+    <div class="r viz">
+      <div class="ent" data-k="cache"><div class="ei">📰</div><div><div class="et">apt update — свежий каталог</div><div class="ed">Скачивает список: какие версии вышли и какие уязвимости в них закрыты. Сам ничего не ставит.</div></div></div>
+      <div class="ent" data-k="upgrade"><div class="ei">🩹</div><div><div class="et">apt upgrade — сами заплатки</div><div class="ed">Ставит новые версии пакетов. <code class="i">upgrade: safe</code> в Ansible ничего не удаляет.</div></div></div>
+      <div class="ent" data-k="reboot"><div class="ei">🔁</div><div><div class="et">reboot-required — нужен перезапуск</div><div class="ed">Новое ядро и некоторые библиотеки начинают работать только после перезагрузки.</div></div></div>
+      <div class="card" style="padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>🕳️ Окно уязвимости</b><span class="muted small" id="winTxt"></span></div>
+        <input type="range" min="0" max="60" value="14" id="winR" aria-label="Сколько дней сервер не обновлялся">
+        <div class="meter"><i id="winM"></i></div>
+        <div class="small muted" id="winNote" style="margin-top:6px"></div>
+      </div>
+      <div class="analogy"><span class="ai">📢</span><div><span class="al">Аналогия</span>Об уязвимости пишут в бюллетене безопасности, чтобы все поставили заплатку. Но этот бюллетень <b>читают и взломщики</b>: не обновился — значит, оставил дверь, о которой знают все.</div></div>
+    </div>
+  </div>
+  <div class="hint">Наведите на шаг или листайте <kbd>→</kbd> · переключатель «Руками / Ansible» общий для всех слайдов</div>
+  <aside class="notes">
+    <p>Первое действие на новом сервере — обновиться. Образ, из которого создан сервер, мог собираться месяцы назад, и в нём уже есть известные уязвимости.</p>
+    <p>apt update и apt upgrade — разные команды: первая обновляет каталог, вторая ставит пакеты. Частая ошибка новичков — сделать только update.</p>
+    <p>Ползунок: чем дольше сервер не обновляется, тем дольше открыто окно, в которое могут пролезть по опубликованной инструкции. В Ansible это три задачи, которые безопасно запускать хоть каждый день. Для продакшена стоит упомянуть пакет unattended-upgrades, который ставит патчи безопасности автоматически.</p>
+  </aside>
+</section>
+
+<!-- ======================= 04 USER + KEYS ======================= -->
+<section data-title="Свой пользователь и SSH-ключ" class="dom-us">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Слой 2 · Пользователь и ключи</div>
+    <h2>Свой пользователь с sudo и вход по ключу</h2>
+  </div>
+  <div class="body split n44">
+    <div class="l dualcode">
+      <div class="viewtabs" role="group" aria-label="Способ"><button data-view="manual">🐧 Руками</button><button data-view="ansible">⚙️ В Ansible</button></div>
+      <script type="text/x-code" data-v="manual" data-lang="bash" data-title="Руками · сервер и ноутбук" data-cls="">
+        #@user
+        # на сервере: пользователь + право sudo
+        sudo adduser anna
+        sudo usermod -aG sudo anna
+        #@gen
+        # на своём ноутбуке: пара ключей
+        ssh-keygen -t ed25519 -C "anna@laptop"
+        #@key
+        # положить публичный ключ на сервер
+        ssh-copy-id anna@203.0.113.10
+        #@check
+        # проверить: пускает без пароля
+        ssh anna@203.0.113.10
+      </script>
+      <script type="text/x-code" data-v="ansible" data-lang="yaml" data-title="Ansible · users.yml" data-cls="">
+        #@user
+        - name: Пользователь с правом sudo
+          ansible.builtin.user:
+            name: anna
+            groups: sudo
+            append: true
+            shell: /bin/bash
+        #@key
+        - name: Публичный ключ anna
+          ansible.posix.authorized_key:
+            user: anna
+            key: "{{ lookup('file', 'keys/anna.pub') }}"
+      </script>
+    </div>
+    <div class="r viz">
+      <div class="ent" data-k="user"><div class="ei">👤</div><div><div class="et">anna + группа sudo</div><div class="ed">Работаем под своим именем. Права root берём точечно через <code class="i">sudo</code>, и каждый вызов попадает в журнал.</div></div></div>
+      <div class="grid g2" style="gap:10px">
+        <div class="ent" data-k="gen"><div class="ei">🗝️</div><div><div class="et">Приватный ключ</div><div class="ed"><code class="i">~/.ssh/id_ed25519</code><br>Ключ от квартиры: только у вас, никому не отдавать.</div></div></div>
+        <div class="ent" data-k="key"><div class="ei">🔒</div><div><div class="et">Публичный ключ</div><div class="ed"><code class="i">id_ed25519.pub</code><br>Замок: можно повесить на сколько угодно серверов.</div></div></div>
+      </div>
+      <div class="card" style="padding:12px 14px" data-k="check">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px"><b>🤝 Как сервер проверяет ключ</b><span><button class="btn sm acc" id="hsNext">Шаг →</button> <button class="btn sm ghost" id="hsReset" aria-label="Сначала">⟲</button></span></div>
+        <div class="hs md-hs" id="hs">
+          <div class="hstep"><i>1</i><div>💻 Ноутбук: «Я anna, вот мой публичный ключ»</div></div>
+          <div class="hstep"><i>2</i><div>🖥️ Сервер находит его в <code class="i">authorized_keys</code> и присылает случайную задачку</div></div>
+          <div class="hstep"><i>3</i><div>💻 Ноутбук решает её <b>приватным ключом</b>: сам ключ никуда не уходит</div></div>
+          <div class="hstep"><i>4</i><div>🖥️ Сервер проверяет ответ замком (публичным ключом) → ✅ пускает</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hint">Наведите на шаг или листайте <kbd>→</kbd></div>
+  <aside class="notes">
+    <p>Сначала создаём своего пользователя. Работать под root опасно: любая опечатка выполняется с полными правами, а в журнале не видно, кто именно что сделал.</p>
+    <p>Аналогия с ключами: приватный ключ — ключ от квартиры, публичный — замок. Замок можно раздать и повесить на любые двери, а ключ всегда остаётся у вас.</p>
+    <p>Пройти рукопожатие по шагам. Главное: по сети не передаётся ни пароль, ни приватный ключ, поэтому подбирать нечего. Ключ ed25519 — современный и короткий, его и рекомендуем.</p>
+    <p>Обязательно проверить вход по ключу в новом окне терминала, прежде чем отключать пароли на следующем слайде.</p>
+  </aside>
+</section>
+
+<!-- ======================= 05 SSHD HARDENING ======================= -->
+<section data-title="Закрываем SSH: root, пароли, AllowUsers" class="dom-dk">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Слой 3 · Закрываем SSH</div>
+    <h2>Закрываем парадный вход: root и пароли — нет</h2>
+  </div>
+  <div class="body split n44">
+    <div class="l dualcode">
+      <div class="viewtabs" role="group" aria-label="Способ"><button data-view="manual">🐧 Руками</button><button data-view="ansible">⚙️ В Ansible</button></div>
+      <script type="text/x-code" data-v="manual" data-lang="bash" data-title="Руками · /etc/ssh/sshd_config.d/" data-cls="sm">
+        sudo tee /etc/ssh/sshd_config.d/10-hardening.conf <<'EOF'
+        #@root
+        PermitRootLogin no
+        #@pass
+        PasswordAuthentication no
+        KbdInteractiveAuthentication no
+        MaxAuthTries 3
+        #@allow
+        AllowUsers anna
+        #@port
+        # Port 2222        # по желанию, см. оговорку
+        EOF
+        #@test
+        # проверить синтаксис и только потом применить
+        sudo sshd -t && sudo systemctl reload ssh
+      </script>
+      <script type="text/x-code" data-v="ansible" data-lang="yaml" data-title="Ansible · ssh.yml" data-cls="sm">
+        - name: Жёсткие настройки SSH
+          ansible.builtin.copy:
+            dest: /etc/ssh/sshd_config.d/10-hardening.conf
+            content: |
+        #@root
+              PermitRootLogin no
+        #@pass
+              PasswordAuthentication no
+              KbdInteractiveAuthentication no
+              MaxAuthTries 3
+        #@allow
+              AllowUsers anna
+        #@test
+            validate: /usr/sbin/sshd -t -f %s
+          notify: Reload ssh
+      </script>
+      <div class="callout small" style="--dom:#b45309;--dom-soft:#fff8e6">⚠️ Не закрывайте текущую сессию, пока не проверите вход <b>в новом окне</b>. Иначе можно запереть себя снаружи.</div>
+    </div>
+    <div class="r">
+      <b>Кто пройдёт? Включайте настройки:</b>
+      <div class="switches" id="sws">
+        <button class="sw" data-s="root" aria-pressed="false"><span class="knob"></span>PermitRootLogin no</button>
+        <button class="sw" data-s="pass" aria-pressed="false"><span class="knob"></span>PasswordAuthentication no</button>
+        <button class="sw" data-s="allow" aria-pressed="false"><span class="knob"></span>AllowUsers anna</button>
+        <button class="sw" data-s="port" aria-pressed="false"><span class="knob"></span>Port 2222</button>
+      </div>
+      <div class="who" id="who"></div>
+      <div class="md-only"><table><tr><th>Кто стучится</th><th>Что его останавливает</th></tr>
+        <tr><td>🤖 Бот перебирает пароль root</td><td>PermitRootLogin no, PasswordAuthentication no</td></tr>
+        <tr><td>🤖 Бот перебирает пароль anna</td><td>PasswordAuthentication no</td></tr>
+        <tr><td>🎣 Украли пароль anna</td><td>PasswordAuthentication no</td></tr>
+        <tr><td>🗝️ Чужой ключ на аккаунте root</td><td>PermitRootLogin no, AllowUsers anna</td></tr>
+        <tr><td>📡 Сканер стучится в порт 22</td><td>ничего (смена порта лишь уменьшает шум)</td></tr>
+        <tr><td>🙋 anna со своим ключом</td><td>проходит — себя мы не заперли</td></tr></table></div>
+      <div class="ent" data-k="port" style="padding:10px 14px"><div class="ei">🪧</div><div><div class="et">Оговорка про смену порта</div><div class="ed">Это не замок, а табличка «здесь двери нет»: шума в логах меньше, но <b>защиты не прибавляет</b>. Не забудьте открыть новый порт в firewall.</div></div></div>
+    </div>
+  </div>
+  <div class="hint">Листайте <kbd>→</kbd> по строкам конфига · переключатели справа кликабельны</div>
+  <aside class="notes">
+    <p>Настройки кладём отдельным файлом в sshd_config.d — так их не перетрёт обновление пакета. На Ubuntu в этой папке часто лежит 50-cloud-init.conf с PasswordAuthentication yes. Для sshd действует первое найденное значение, файлы читаются по алфавиту, поэтому наш 10-hardening.conf победит.</p>
+    <p>Пощёлкать переключатели: PermitRootLogin no отрезает главную цель ботов. PasswordAuthentication no делает перебор паролей бессмысленным. AllowUsers — белый список. А anna со своим ключом проходит всегда: мы себя не заперли.</p>
+    <p>Смена порта — честная оговорка: это снижает шум от ботов, но не является защитой. Сканер найдёт порт за секунды.</p>
+    <p>sshd -t проверяет синтаксис. В Ansible то же самое делает validate: битый конфиг просто не будет записан. И снова handler: reload произойдёт в конце play.</p>
+  </aside>
+</section>
+
+<!-- ======================= 06 FIREWALL + PORTS ======================= -->
+<section data-title="Firewall и аудит портов" class="dom-fw">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Слой 4 · Firewall и минимум сервисов</div>
+    <h2>Сначала узнать, какие двери есть, потом поставить охрану</h2>
+  </div>
+  <div class="body split n44">
+    <div class="l dualcode">
+      <div class="viewtabs" role="group" aria-label="Способ"><button data-view="manual">🐧 Руками</button><button data-view="ansible">⚙️ В Ansible</button></div>
+      <script type="text/x-code" data-v="manual" data-lang="bash" data-title="Руками · терминал" data-cls="sm">
+        #@audit
+        # какие сервисы слушают порты?
+        sudo ss -tulpn
+        #@policy
+        # входящие — запрещены, исходящие — можно
+        sudo ufw default deny incoming
+        sudo ufw default allow outgoing
+        #@allow
+        sudo ufw allow OpenSSH       # сначала SSH!
+        sudo ufw allow 80,443/tcp
+        #@enable
+        sudo ufw enable
+        #@disable
+        # лишний сервис — выключить совсем
+        sudo systemctl disable --now cups
+      </script>
+      <script type="text/x-code" data-v="ansible" data-lang="yaml" data-title="Ansible · firewall.yml" data-cls="sm">
+        #@allow
+        - name: Разрешить SSH, HTTP, HTTPS
+          community.general.ufw:
+            rule: allow
+            port: "{{ item }}"
+            proto: tcp
+          loop: ["22", "80", "443"]
+        #@enable
+        - name: Включить ufw, остальное — deny
+          community.general.ufw:
+            state: enabled
+            policy: deny
+        #@disable
+        - name: Лишние сервисы выключены
+          ansible.builtin.systemd:
+            name: cups
+            state: stopped
+            enabled: false
+      </script>
+    </div>
+    <div class="r">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="sw" id="fwT" aria-pressed="false" style="font-family:var(--sans)"><span class="knob"></span>ufw включён</button>
+        <button class="sw" id="cupsT" aria-pressed="false" style="font-family:var(--sans)"><span class="knob"></span>cups выключен</button>
+        <span class="muted small" id="fwSum"></span>
+      </div>
+      <div data-k="audit" class="frame solid" style="padding:10px 12px;gap:6px">
+        <div class="flabel">$ sudo ss -tulpn <small>что видно из интернета</small></div>
+        <div class="md-only"><table><tr><th>Сервис</th><th>Слушает</th><th>Без ufw</th><th>С ufw</th></tr>
+          <tr><td>sshd</td><td>0.0.0.0:22</td><td>виден всем</td><td>открыт намеренно</td></tr>
+          <tr><td>nginx</td><td>0.0.0.0:80, :443</td><td>виден всем</td><td>открыт намеренно</td></tr>
+          <tr><td>postgres</td><td>127.0.0.1:5432</td><td>только локально</td><td>только локально</td></tr>
+          <tr><td>redis</td><td>0.0.0.0:6379</td><td>виден всем</td><td>закрыт ufw, но слушает → лучше bind 127.0.0.1</td></tr>
+          <tr><td>cupsd</td><td>0.0.0.0:631</td><td>виден всем</td><td>не нужен → systemctl disable --now</td></tr></table></div>
+        <table class="ports" id="ports"><thead><tr><th>Сервис</th><th>Слушает</th><th style="text-align:right">Снаружи</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="grid g3 md-list" style="gap:10px">
+        <div class="ent" data-k="audit"><div class="ei">🔦</div><div><div class="et">ss -tulpn</div><div class="ed">обход здания: какие двери вообще есть</div></div></div>
+        <div class="ent" data-k="policy enable allow"><div class="ei">💂</div><div><div class="et">ufw</div><div class="ed">охрана на КПП: пускает только по списку</div></div></div>
+        <div class="ent" data-k="disable"><div class="ei">🧱</div><div><div class="et">disable --now</div><div class="ed">лишнюю дверь заложить кирпичом</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hint">Листайте <kbd>→</kbd> по шагам · переключатели справа кликабельны</div>
+  <aside class="notes">
+    <p>Начинаем не с firewall, а с аудита: ss -tulpn показывает, какие программы слушают какие порты. Часто там находится то, о чём вы не знали: cups (печать), redis, открытый на весь мир, и так далее.</p>
+    <p>Пощёлкать: без ufw снаружи видно всё, что слушает 0.0.0.0. С ufw видно только 22, 80 и 443. Redis спрятан firewall-ом, но всё ещё слушает все интерфейсы. Лучше настроить его на 127.0.0.1: если firewall однажды выключат, база не окажется в интернете.</p>
+    <p>Порядок критичен: allow OpenSSH до ufw enable, иначе вы отрежете себе доступ. Если меняли порт SSH, разрешить нужно именно его.</p>
+    <p>Самый надёжный способ закрыть дверь — убрать её: ненужный сервис выключаем через systemctl disable --now.</p>
+  </aside>
+</section>
+
+<!-- ======================= 07 FAIL2BAN ======================= -->
+<section data-title="fail2ban: охранник с памятью на лица" class="dom-id">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Слой 5 · fail2ban</div>
+    <h2>fail2ban: охранник, который запоминает лица</h2>
+  </div>
+  <div class="body split n44">
+    <div class="l dualcode">
+      <div class="viewtabs" role="group" aria-label="Способ"><button data-view="manual">🐧 Руками</button><button data-view="ansible">⚙️ В Ansible</button></div>
+      <script type="text/x-code" data-v="manual" data-lang="bash" data-title="Руками · терминал" data-cls="sm">
+        sudo apt install -y fail2ban
+        sudo tee /etc/fail2ban/jail.local <<'EOF'
+        [sshd]
+        enabled  = true
+        #@maxretry
+        maxretry = 5
+        #@findtime
+        findtime = 10m
+        #@bantime
+        bantime  = 1h
+        EOF
+        sudo systemctl restart fail2ban
+        #@status
+        # кто сейчас в бане?
+        sudo fail2ban-client status sshd
+        sudo fail2ban-client set sshd unbanip 198.51.100.7
+      </script>
+      <script type="text/x-code" data-v="ansible" data-lang="yaml" data-title="Ansible · fail2ban.yml" data-cls="sm">
+        - name: fail2ban установлен
+          ansible.builtin.apt: { name: fail2ban, state: present }
+
+        - name: Правила для SSH
+          ansible.builtin.copy:
+            dest: /etc/fail2ban/jail.local
+            content: |
+              [sshd]
+              enabled  = true
+        #@maxretry
+              maxretry = 5
+        #@findtime
+              findtime = 10m
+        #@bantime
+              bantime  = 1h
+        #@status
+          notify: Restart fail2ban
+      </script>
+    </div>
+    <div class="r">
+      <div class="grid g3" style="gap:10px">
+        <div class="ent" data-k="maxretry"><div class="ei">5️⃣</div><div><div class="et">maxretry</div><div class="ed">сколько ошибок прощаем</div></div></div>
+        <div class="ent" data-k="findtime"><div class="ei">⏱️</div><div><div class="et">findtime</div><div class="ed">за какое время считаем</div></div></div>
+        <div class="ent" data-k="bantime"><div class="ei">⛔</div><div><div class="et">bantime</div><div class="ed">на сколько не пускаем</div></div></div>
+      </div>
+      <div class="ctl"><button class="btn acc sm" id="fbBot">🤖 Бот атакует</button><button class="btn ghost sm" id="fbMe">🙋 Я ошиблась 2 раза</button><button class="btn ghost sm" id="fbHour">⏩ Прошёл час</button></div>
+      <div class="frame solid" data-k="status" style="padding:10px 12px;gap:6px">
+        <div class="flabel">fail2ban-client status sshd <small>журнал охранника</small></div>
+        <table class="jail"><thead><tr><th>IP</th><th>Ошибки (из 5)</th><th>Статус</th></tr></thead><tbody id="jail"></tbody></table>
+      </div>
+      <div class="file" style="flex:none;height:150px"><div class="fh">/var/log/fail2ban.log</div><pre id="fbLog"></pre></div>
+      <div class="analogy"><span class="ai">💂</span><div><span class="al">Аналогия</span>Охранник на входе запоминает лица: <b>5 неудачных попыток за 10 минут — и час вас не пускают</b>. Пару опечаток он прощает.</div></div>
+    </div>
+  </div>
+  <div class="hint">Листайте <kbd>→</kbd> по параметрам · кнопки справа запускают симуляцию</div>
+  <aside class="notes">
+    <p>fail2ban читает логи и, если один IP слишком часто ошибается, добавляет правило firewall, которое временно его блокирует.</p>
+    <p>Аналогия: охранник запоминает лица. Пять неудачных попыток за 10 минут, и человека не пускают час. Свои ошибки (две опечатки) он прощает.</p>
+    <p>Нажать «Бот атакует» — после 5-й ошибки IP уходит в бан. «Я ошиблась 2 раза» — счётчик растёт, но бана нет. «Прошёл час» — баны снимаются.</p>
+    <p>Если вход по паролю уже отключён, зачем fail2ban? Он снижает шум и нагрузку и защищает другие сервисы: у fail2ban есть jail-ы для nginx, почты и т. д. Слои обороны дополняют друг друга. В Ansible снова видим handler — перезапуск только при изменении конфига.</p>
+  </aside>
+</section>
+
+<!-- ======================= 08 CHECKLIST ======================= -->
+<section data-title="Чек-лист первых 15 минут" class="dom-ng">
+  <div class="sh">
+    <div class="kicker"><span class="n"></span>Итоги</div>
+    <h2>Первые 15 минут нового сервера</h2>
+    <p class="lede md-p">Порядок важен: каждый шаг готовит почву для следующего и <b>не даёт запереть самого себя снаружи</b>.</p>
+  </div>
+  <div class="body split">
+    <div class="l">
+      <ol class="order md-list" id="order">
+        <li><label><input type="checkbox"><span class="tx">🔄 Обновиться: <code class="i">apt update && apt upgrade</code></span></label></li>
+        <li><label><input type="checkbox"><span class="tx">👤 Создать своего пользователя и добавить в <code class="i">sudo</code></span></label></li>
+        <li><label><input type="checkbox"><span class="tx">🔑 Положить SSH-ключ и <b>проверить вход в новом окне</b><span class="warn">⚠️ до отключения паролей</span></span></label></li>
+        <li><label><input type="checkbox"><span class="tx">🚪 Запретить root и пароли, проверить <code class="i">sshd -t</code></span></label></li>
+        <li><label><input type="checkbox"><span class="tx">🧱 <code class="i">ufw allow OpenSSH</code>, потом <code class="i">ufw enable</code><span class="warn">⚠️ именно в таком порядке</span></span></label></li>
+        <li><label><input type="checkbox"><span class="tx">🛡️ Поставить fail2ban</span></label></li>
+        <li><label><input type="checkbox"><span class="tx">🔦 <code class="i">ss -tulpn</code> и выключить всё лишнее</span></label></li>
+      </ol>
+      <div class="prog" style="height:8px;background:var(--line);border-radius:99px;overflow:hidden"><i id="ordBar" style="display:block;height:100%;width:0;background:var(--accent);transition:width .3s"></i></div>
+    </div>
+    <div class="r">
+      <script type="text/x-code" data-lang="yaml" data-title="site.yml — всё это одной ролью" data-cls="lg">
+        - hosts: all
+          become: true
+          roles:
+            - hardening   # обновления, users, ssh,
+                          # ufw, fail2ban, лишние сервисы
+      </script>
+      <div class="md-only md-p">⏱️ Руками, один сервер: <b>~15 минут</b> и надежда, что ничего не забыли. Ansible, любое число серверов: <b>одна команда</b> <code>ansible-playbook site.yml</code>.</div>
+      <div class="grid g2" style="gap:10px">
+        <div class="card" style="padding:14px 16px"><div class="muted small">Руками, один сервер</div><div style="font-size:30px;font-weight:800">~15 минут</div><div class="small muted">и надежда, что ничего не забыли</div></div>
+        <div class="card" style="padding:14px 16px;border-color:var(--accent-line);background:var(--accent-soft)"><div class="muted small">Ansible, любое число серверов</div><div style="font-size:30px;font-weight:800;color:var(--accent)">1 команда</div><div class="small muted"><code class="i">ansible-playbook site.yml</code></div></div>
+      </div>
+      <div class="analogy"><span class="ai">🧱</span><div><span class="al">Связь с частью 1</span>Каждый пункт чек-листа — кирпичик. Сложите их в роль <code class="i">hardening</code>, и <b>любой новый сервер</b> получит ту же защиту за один запуск.</div></div>
+      <p class="thanks" style="margin-top:6px">🙌 Вопросы? <a class="btn sm ghost" href="../ansible/" style="margin-left:10px;vertical-align:middle;text-decoration:none">← Часть 1: Ansible</a></p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Пройтись по чек-листу и отметить пункты. Акцент на двух ловушках: отключать пароли только после проверки входа по ключу и включать ufw только после allow SSH. Обе ошибки приводят к потере доступа к серверу.</p>
+    <p>Финальная мысль: всё, что сегодня делали руками, складывается в одну роль Ansible. Это и есть связь двух частей курса: понимаем Linux и автоматизируем его.</p>
+    <p>Домашнее задание: написать роль hardening из задач этой лекции и прогнать её на чистой виртуальной машине дважды. Второй запуск должен быть полностью ok.</p>
+  </aside>
+</section>
+
+</main>
+</div>
+
+<div class="progress" aria-hidden="true"><i></i></div>
+<nav class="controls" aria-label="Навигация по слайдам">
+  <button id="prevB" title="Назад (←)" aria-label="Назад">←</button>
+  <span class="cnt" id="cnt" aria-live="polite"></span>
+  <button id="nextB" title="Далее (→)" aria-label="Далее">→</button>
+  <span class="sep opt"></span>
+  <button id="menuB" title="Все слайды (M)" aria-label="Список слайдов">☰</button>
+  <button id="notesB" class="opt" title="Заметки лектора (N)" aria-label="Заметки лектора">🗒</button>
+  <button id="presB" class="opt" title="Режим докладчика (P)" aria-label="Режим докладчика">🎤</button>
+  <button id="fsB" class="opt" title="Полный экран (F)" aria-label="Полный экран">⛶</button>
+</nav>
+<div class="menu" id="menu" role="dialog" aria-label="Список слайдов"></div>
+<div class="notes-panel" id="notesP" aria-live="polite"></div>
+
+<script src="../assets/deck.js"></script>
+<script src="slides.js"></script>
+</body>
+</html>

@@ -45,6 +45,6 @@
 
 <div align="center">
 
-[⬅️ Назад](03-declarative.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/#4) · [Далее ➡️](05-idempotency.md)
+[⬅️ Назад](03-declarative.md) · [▶️ Интерактивная версия](https://ftonita.github.io/ansible-linux-practice/ansible/#4) · [Далее ➡️](05-idempotency.md)
 
 </div>
