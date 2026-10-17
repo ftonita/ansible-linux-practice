@@ -1,18 +1,46 @@
 # ansible-linux-practice
 
-## 📊 Презентация: «Ansible для новичков»
+## 🧱 Лекция «Ansible: кирпичики инфраструктуры»
 
-🌐 **Интерактивная версия:** https://ftonita.github.io/ansible-linux-practice/
+Занятие 2 (теория), продолжение практики: **зачем нужен Ansible и почему он устроен именно так**.
+Модули как кирпичики, идемпотентность, пять примеров «код ↔ сущности», роли, коллекции и инфраструктура как код. Всё объясняется через аналогии.
 
-Исходники в Markdown: один слайд — один файл. Читайте по порядку:
+### ▶️ Интерактивная презентация
 
-| # | Слайд |
+**https://ftonita.github.io/ansible-linux-practice/**
+
+| Клавиша | Действие |
 |---|---|
-| 1 | [Титульный](slides/01-title.md) |
-| 2 | [Проблема ручной настройки](slides/02-problem.md) |
-| 3 | [Что такое Ansible](slides/03-what-is-ansible.md) |
-| 4 | [Как это работает](slides/04-how-it-works.md) |
-| 5 | [Пример 1: Inventory и ping](slides/05-example-inventory.md) |
-| 6 | [Пример 2: Первый playbook](slides/06-example-playbook.md) |
-| 7 | [Плюсы Ansible](slides/07-benefits.md) |
-| 8 | [Итоги и следующие шаги](slides/08-next-steps.md) |
+| `→` / `Пробел` | далее (на слайдах с кодом — пошаговая подсветка задач) |
+| `←` | назад |
+| `F` | полный экран (проектор) |
+| `P` | режим докладчика: отдельное окно с заметками, следующим слайдом и таймером |
+| `N` | заметки лектора поверх слайда |
+| `M` | список слайдов |
+
+Формат 16:9 масштабируется под любой экран. На телефоне вёрстка адаптивная, слайды листаются свайпом.
+
+### 📄 Слайды в Markdown (1 слайд = 1 файл, с заметками лектора)
+
+| # | Слайд | # | Слайд |
+|---|---|---|---|
+| 01 | [Из кирпичиков — в инфраструктуру](slides/01-title.md) | 09 | [Пример: nginx, шаблоны, handlers](slides/09-example-nginx.md) |
+| 02 | [Сервер-питомец или по чертежу](slides/02-why.md) | 10 | [Пример: PostgreSQL](slides/10-example-postgresql.md) |
+| 03 | [«Как» или «что»: декларативный подход](slides/03-declarative.md) | 11 | [Пример: Docker](slides/11-example-docker.md) |
+| 04 | [Модуль — кирпичик](slides/04-module.md) | 12 | [Роли — готовые блоки](slides/12-roles.md) |
+| 05 | [Идемпотентность](slides/05-idempotency.md) | 13 | [Коллекции и FQCN](slides/13-collections.md) |
+| 06 | [Каталог модулей](slides/06-catalog.md) | 14 | [Инфраструктура как код](slides/14-iac.md) |
+| 07 | [Пример: ОС и firewall](slides/07-example-os-firewall.md) | 15 | [Итоги и самопроверка](slides/15-summary.md) |
+| 08 | [Пример: пользователи и SSH](slides/08-example-users-ssh.md) | | |
+
+### 🛠 Структура репозитория
+
+```text
+docs/                 # GitHub Pages: интерактивная презентация (источник контента)
+├── index.html        #   все 15 слайдов + заметки лектора
+└── assets/           #   deck.css (дизайн-система), deck.js (движок), slides.js (интерактив)
+slides/               # Markdown-версия, генерируется из docs/index.html
+tools/build_md.py     # генератор: python3 tools/build_md.py  (нужен beautifulsoup4)
+```
+
+Контент правится в `docs/index.html`, после чего Markdown пересобирается командой `python3 tools/build_md.py`.
