@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate slides/NN-*.md from docs/index.html (single source of truth).
+"""Generate slides/NN-*.md from index.html (single source of truth).
 
 Usage: python3 tools/build_md.py
 """
@@ -10,7 +10,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup, NavigableString, Tag
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "docs" / "index.html"
+SRC = ROOT / "index.html"
 OUT = ROOT / "slides"
 SITE = "https://ftonita.github.io/ansible-linux-practice/"
 

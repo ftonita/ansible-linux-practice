@@ -36,11 +36,11 @@
 ### 🛠 Структура репозитория
 
 ```text
-docs/                 # GitHub Pages: интерактивная презентация (источник контента)
-├── index.html        #   все 15 слайдов + заметки лектора
-└── assets/           #   deck.css (дизайн-система), deck.js (движок), slides.js (интерактив)
-slides/               # Markdown-версия, генерируется из docs/index.html
+index.html            # GitHub Pages: интерактивная презентация (источник контента)
+assets/               # deck.css (дизайн-система), deck.js (движок), slides.js (интерактив)
+.nojekyll             # отключает Jekyll, чтобы Pages отдавал презентацию как есть
+slides/               # Markdown-версия, генерируется из index.html
 tools/build_md.py     # генератор: python3 tools/build_md.py  (нужен beautifulsoup4)
 ```
 
-Контент правится в `docs/index.html`, после чего Markdown пересобирается командой `python3 tools/build_md.py`.
+Контент правится в `index.html`, после чего Markdown пересобирается командой `python3 tools/build_md.py`.
